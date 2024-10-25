@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	PollInterval = time.Second
+	PollInterval = 5 * time.Second
 	TestTimeout  = 10 * time.Minute
 )
 
