@@ -76,7 +76,7 @@ var _ = Describe("Istio-CSR", Ordered, Label("TechPreview", "Feature:IstioCSR"),
 	})
 
 	Context("grpc call istio.v1.auth.IstioCertificateService/CreateCertificate to istio-csr agent", func() {
-		It("should return cert-chain as response", func() {
+		It("should return cert-chain as response", Label("Debug:Yes"), MustPassRepeatedly(10), func() {
 			serviceAccountName := "cert-manager-istio-csr"
 			grpcAppName := "grpcurl-istio-csr"
 
@@ -87,6 +87,10 @@ var _ = Describe("Istio-CSR", Ordered, Label("TechPreview", "Feature:IstioCSR"),
 			By("issuing TLS certificate")
 			loader.CreateFromFile(testassets.ReadFile, filepath.Join("testdata", "self_signed", "certificate.yaml"), ns.Name)
 			defer loader.DeleteFromFile(testassets.ReadFile, filepath.Join("testdata", "self_signed", "certificate.yaml"), ns.Name)
+
+			By("waiting for certificate to get ready")
+			err := waitForCertificateReadiness(ctx, "my-selfsigned-ca", ns.Name)
+			Expect(err).NotTo(HaveOccurred())
 
 			By("fetching proto file from api")
 			protoContent, err := library.FetchFileFromURL(istioCSRProtoURL)
@@ -115,10 +119,11 @@ var _ = Describe("Istio-CSR", Ordered, Label("TechPreview", "Feature:IstioCSR"),
 			loader.CreateFromFile(testassets.ReadFile, filepath.Join("testdata", "istio", "istio_csr.yaml"), ns.Name)
 			defer loader.DeleteFromFile(testassets.ReadFile, filepath.Join("testdata", "istio", "istio_csr.yaml"), ns.Name)
 
-			By("poll till cert-manager-istio-csr is available")
+			By("poll till cert-manager-istio-csr deployment is available")
 			err = pollTillDeploymentAvailable(ctx, clientset, ns.Name, "cert-manager-istio-csr")
 			Expect(err).Should(BeNil())
 
+			By("poll till istiocsr/default object is available")
 			istioCSRStatus, err := pollTillIstioCSRAvailable(ctx, dynamicClient, ns.Name, "default")
 			Expect(err).Should(BeNil())
 
