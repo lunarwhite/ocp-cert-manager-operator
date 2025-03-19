@@ -490,7 +490,7 @@ var _ = Describe("Overrides test", Ordered, func() {
 		})
 	})
 
-	Context("When adding valid cert-manager controller override env", Label("Debug:Yes"), func() {
+	Context("When adding valid cert-manager controller override env", func() {
 
 		It("should add the env to the cert-manager controller deployment", func() {
 
@@ -509,7 +509,7 @@ var _ = Describe("Overrides test", Ordered, func() {
 		})
 	})
 
-	Context("When adding invalid cert-manager controller override env", Label("Debug:Yes"), func() {
+	Context("When adding invalid cert-manager controller override env", func() {
 
 		It("should not add the env to the cert-manager controller deployment", func() {
 
