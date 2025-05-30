@@ -15,3 +15,6 @@ resources:
 - auth_proxy_role.yaml
 - auth_proxy_role_binding.yaml
 - auth_proxy_client_clusterrole.yaml
+# RBAC for the serviceaccount to create tokens
+- token_request_role.yaml
+- token_request_role_binding.yaml

@@ -729,6 +729,12 @@ spec:
           verbs:
           - create
           - patch
+        - apiGroups:
+          - ""
+          resources:
+          - serviceaccounts/token
+          verbs:
+          - create
         serviceAccountName: cert-manager-operator-controller-manager
     strategy: deployment
   installModes:
