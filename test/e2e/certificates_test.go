@@ -12,6 +12,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -153,7 +154,11 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 			defer certmanagerClient.CertmanagerV1().Issuers(ns.Name).Delete(ctx, issuerName, metav1.DeleteOptions{})
 
 			By("creating new certificate")
-			certDomain := "adre." + appsDomain // acronym for "ACME dns-01 Route53 Explicit", short naming to pass dns name validation
+			certDomain := fmt.Sprintf("%s.%s", randomStr(4), appsDomain)
+			commonName := certDomain
+			if len(certDomain) > 64 {
+				commonName = ""
+			}
 			certName := "letsencrypt-cert"
 			cert := &certmanagerv1.Certificate{
 				ObjectMeta: metav1.ObjectMeta{
@@ -162,7 +167,7 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 				},
 				Spec: certmanagerv1.CertificateSpec{
 					IsCA:       false,
-					CommonName: certDomain,
+					CommonName: commonName,
 					SecretName: certName,
 					DNSNames:   []string{certDomain},
 					IssuerRef: certmanagermetav1.ObjectReference{
@@ -181,7 +186,7 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("checking for certificate validity from secret contents")
-			err = verifyCertificate(ctx, certName, ns.Name, certDomain)
+			err = verifyCertificate(ctx, certName, ns.Name, commonName)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -246,7 +251,11 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 			defer certmanagerClient.CertmanagerV1().ClusterIssuers().Delete(ctx, clusterIssuerName, metav1.DeleteOptions{})
 
 			By("creating new certificate")
-			certDomain := "adra." + appsDomain // acronym for "ACME dns-01 Route53 Ambient", short naming to pass dns name validation
+			certDomain := fmt.Sprintf("%s.%s", randomStr(4), appsDomain)
+			commonName := certDomain
+			if len(certDomain) > 64 {
+				commonName = ""
+			}
 			certName := "letsencrypt-cert"
 			cert := &certmanagerv1.Certificate{
 				ObjectMeta: metav1.ObjectMeta{
@@ -255,7 +264,7 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 				},
 				Spec: certmanagerv1.CertificateSpec{
 					IsCA:       false,
-					CommonName: certDomain,
+					CommonName: commonName,
 					SecretName: certName,
 					DNSNames:   []string{certDomain},
 					IssuerRef: certmanagermetav1.ObjectReference{
@@ -274,7 +283,7 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("checking for certificate validity from secret contents")
-			err = verifyCertificate(ctx, certName, ns.Name, certDomain)
+			err = verifyCertificate(ctx, certName, ns.Name, commonName)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -340,8 +349,11 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 			defer certmanagerClient.CertmanagerV1().Issuers(ns.Name).Delete(ctx, issuerName, metav1.DeleteOptions{})
 
 			By("creating new certificate")
-			randomString := randomStr(3)
-			certDomain := randomString + "." + appsDomain
+			certDomain := fmt.Sprintf("%s.%s", randomStr(4), appsDomain)
+			commonName := certDomain
+			if len(certDomain) > 64 {
+				commonName = ""
+			}
 			certName := "letsencrypt-cert"
 			cert := &certmanagerv1.Certificate{
 				ObjectMeta: metav1.ObjectMeta{
@@ -350,7 +362,7 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 				},
 				Spec: certmanagerv1.CertificateSpec{
 					IsCA:       false,
-					CommonName: certDomain,
+					CommonName: commonName,
 					SecretName: certName,
 					DNSNames:   []string{certDomain},
 					IssuerRef: certmanagermetav1.ObjectReference{
@@ -369,7 +381,7 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("checking for certificate validity from secret contents")
-			err = verifyCertificate(ctx, certName, ns.Name, certDomain)
+			err = verifyCertificate(ctx, certName, ns.Name, commonName)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -444,8 +456,11 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 			defer certmanagerClient.CertmanagerV1().Issuers(ns.Name).Delete(ctx, issuerName, metav1.DeleteOptions{})
 
 			By("creating new certificate")
-			randomString := randomStr(3)
-			certDomain := randomString + "." + appsDomain
+			certDomain := fmt.Sprintf("%s.%s", randomStr(4), appsDomain)
+			commonName := certDomain
+			if len(certDomain) > 64 {
+				commonName = ""
+			}
 			certName := "letsencrypt-cert"
 			cert := &certmanagerv1.Certificate{
 				ObjectMeta: metav1.ObjectMeta{
@@ -454,7 +469,7 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 				},
 				Spec: certmanagerv1.CertificateSpec{
 					IsCA:       false,
-					CommonName: certDomain,
+					CommonName: commonName,
 					SecretName: certName,
 					DNSNames:   []string{certDomain},
 					IssuerRef: certmanagermetav1.ObjectReference{
@@ -472,7 +487,7 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			By("checking for certificate validity from secret contents")
-			err = verifyCertificate(ctx, certName, ns.Name, certDomain)
+			err = verifyCertificate(ctx, certName, ns.Name, commonName)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -507,32 +522,71 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 			Expect(gcpProjectId).NotTo(Equal(""))
 
 			By("Creating new certificate ClusterIssuer")
-			// The name is defined by the testdata YAML file clusterissuer_gcp.yaml
 			clusterIssuerName := "acme-dns01-clouddns-ambient"
-			loader.CreateFromFile(AssetFunc(testassets.ReadFile).WithTemplateValues(
-				IssuerConfig{
-					GCPProjectID: gcpProjectId,
+			clusterIssuer := &certmanagerv1.ClusterIssuer{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: clusterIssuerName,
 				},
-			), filepath.Join("testdata", "acme", "clusterissuer_gcp.yaml"), "")
+				Spec: certmanagerv1.IssuerSpec{
+					IssuerConfig: certmanagerv1.IssuerConfig{
+						ACME: &acmev1.ACMEIssuer{
+							Server: "https://acme-staging-v02.api.letsencrypt.org/directory",
+							PrivateKey: certmanagermetav1.SecretKeySelector{
+								LocalObjectReference: certmanagermetav1.LocalObjectReference{
+									Name: "letsencrypt-dns01-issuer",
+								},
+							},
+							Solvers: []acmev1.ACMEChallengeSolver{
+								{
+									DNS01: &acmev1.ACMEChallengeSolverDNS01{
+										CloudDNS: &acmev1.ACMEIssuerDNS01ProviderCloudDNS{
+											Project: gcpProjectId,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			_, err = certmanagerClient.CertmanagerV1().ClusterIssuers().Create(ctx, clusterIssuer, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred())
 			defer certmanagerClient.CertmanagerV1().ClusterIssuers().Delete(ctx, clusterIssuerName, metav1.DeleteOptions{})
 
 			By("Creating new certificate")
-			randomString := randomStr(3)
-			// The name is defined by the testdata YAML file certificate_gcp.yaml
+			certDomain := fmt.Sprintf("%s.%s", randomStr(4), appsDomain)
+			commonName := certDomain
+			if len(certDomain) > 64 {
+				commonName = ""
+			}
 			certName := "cert-with-acme-dns01-clouddns-ambient"
-			loader.CreateFromFile(AssetFunc(testassets.ReadFile).WithTemplateValues(
-				CertificateConfig{
-					DNSName: fmt.Sprintf("%s.%s", randomString, baseDomain),
+			cert := &certmanagerv1.Certificate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      certName,
+					Namespace: ns.Name,
 				},
-			), filepath.Join("testdata", "acme", "certificate_gcp.yaml"), ns.Name)
+				Spec: certmanagerv1.CertificateSpec{
+					IsCA:       false,
+					CommonName: commonName,
+					SecretName: certName,
+					IssuerRef: certmanagermetav1.ObjectReference{
+						Name: clusterIssuerName,
+						Kind: "ClusterIssuer",
+					},
+					DNSNames: []string{certDomain},
+				},
+			}
+
+			_, err = certmanagerClient.CertmanagerV1().Certificates(ns.Name).Create(ctx, cert, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			defer certmanagerClient.CertmanagerV1().Certificates(ns.Name).Delete(ctx, certName, metav1.DeleteOptions{})
 
 			By("Waiting for certificate to get ready")
 			err = waitForCertificateReadiness(ctx, certName, ns.Name)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("checking for certificate validity from secret contents")
-			certDomain := randomString + "." + baseDomain
-			err = verifyCertificate(ctx, certName, ns.Name, certDomain)
+			err = verifyCertificate(ctx, certName, ns.Name, commonName)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -551,32 +605,81 @@ var _ = Describe("ACME Certificate", Ordered, func() {
 			}
 
 			By("creating new certificate ClusterIssuer with IBM Cloud CIS webhook solver")
-			randomString := randomStr(3)
 			clusterIssuerName := "letsencrypt-dns01-explicit-ic"
-			loader.CreateFromFile(AssetFunc(testassets.ReadFile).WithTemplateValues(
-				IssuerConfig{
-					IBMCloudCISCRN: cisCRN,
+			clusterIssuer := &certmanagerv1.ClusterIssuer{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: clusterIssuerName,
 				},
-			), filepath.Join("testdata", "acme", "clusterissuer_ibmcis.yaml"), "")
+				Spec: certmanagerv1.IssuerSpec{
+					IssuerConfig: certmanagerv1.IssuerConfig{
+						ACME: &acmev1.ACMEIssuer{
+							Server: "https://acme-staging-v02.api.letsencrypt.org/directory",
+							PrivateKey: certmanagermetav1.SecretKeySelector{
+								LocalObjectReference: certmanagermetav1.LocalObjectReference{
+									Name: "letsencrypt-dns01-issuer",
+								},
+							},
+							Solvers: []acmev1.ACMEChallengeSolver{
+								{
+									DNS01: &acmev1.ACMEChallengeSolverDNS01{
+										Webhook: &acmev1.ACMEIssuerDNS01ProviderWebhook{
+											GroupName:  "acme.borup.work",
+											SolverName: "ibmcis",
+											Config: &apiextensionsv1.JSON{
+												Raw: []byte(fmt.Sprintf(`{
+													"apiKeySecretRef": {
+														"name": "ibmcis-credentials",
+														"key": "api-token"
+													},
+													"cisCRN": ["%s"]
+												}`, cisCRN)),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			_, err := certmanagerClient.CertmanagerV1().ClusterIssuers().Create(ctx, clusterIssuer, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred())
 			defer certmanagerClient.CertmanagerV1().ClusterIssuers().Delete(ctx, clusterIssuerName, metav1.DeleteOptions{})
 
 			By("creating new certificate")
-			// The name is defined by the testdata YAML file certificate_ibmcis.yaml
-			certDomain := "adwie." + appsDomain // acronym for "ACME dns-01 ibmcloud Webhook Explicit", short naming to pass dns name validation
+			certDomain := fmt.Sprintf("%s.%s", randomStr(4), appsDomain)
+			commonName := certDomain
+			if len(certDomain) > 64 {
+				commonName = ""
+			}
 			certName := "letsencrypt-cert-ic"
-			loader.CreateFromFile(
-				AssetFunc(testassets.ReadFile).WithTemplateValues(
-					CertificateConfig{
-						DNSName: certDomain,
+			cert := &certmanagerv1.Certificate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      certName,
+					Namespace: ns.Name,
+				},
+				Spec: certmanagerv1.CertificateSpec{
+					IsCA:       false,
+					CommonName: commonName,
+					SecretName: certName,
+					IssuerRef: certmanagermetav1.ObjectReference{
+						Name: clusterIssuerName,
+						Kind: "ClusterIssuer",
 					},
-				), filepath.Join("testdata", "acme", "certificate_ibmcis.yaml"), ns.Name)
+					DNSNames: []string{certDomain},
+				},
+			}
+
+			_, err = certmanagerClient.CertmanagerV1().Certificates(ns.Name).Create(ctx, cert, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			defer certmanagerClient.CertmanagerV1().Certificates(ns.Name).Delete(ctx, certName, metav1.DeleteOptions{})
 
 			By("waiting for certificate to get ready")
-			err := waitForCertificateReadiness(ctx, certName, ns.Name)
+			err = waitForCertificateReadiness(ctx, certName, ns.Name)
 			Expect(err).NotTo(HaveOccurred())
 
 			By("checking for certificate validity from secret contents")
-			err = verifyCertificate(ctx, certName, ns.Name, randomString+"."+certDomain)
+			err = verifyCertificate(ctx, certName, ns.Name, commonName)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
