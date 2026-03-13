@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -53,9 +54,16 @@ var istioCSRManagedResources = []client.Object{
 
 // trustManagerManagedResources defines the resources managed by the TrustManager controller.
 // These resources will be watched with a label selector filter.
-// TODO: Add more resources as they are implemented
 var trustManagerManagedResources = []client.Object{
+	&certmanagerv1.Certificate{},
+	&appsv1.Deployment{},
+	&rbacv1.ClusterRole{},
+	&rbacv1.ClusterRoleBinding{},
+	&rbacv1.Role{},
+	&rbacv1.RoleBinding{},
+	&corev1.Service{},
 	&corev1.ServiceAccount{},
+	&admissionregistrationv1.ValidatingWebhookConfiguration{},
 }
 
 func init() {
@@ -66,6 +74,7 @@ func init() {
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(networkingv1.AddToScheme(scheme))
 	utilruntime.Must(rbacv1.AddToScheme(scheme))
+	utilruntime.Must(admissionregistrationv1.AddToScheme(scheme))
 	utilruntime.Must(certmanagerv1.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
