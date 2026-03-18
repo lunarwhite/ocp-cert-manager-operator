@@ -372,6 +372,62 @@ var _ = Describe("TrustManager", Ordered, Label("Feature:TrustManager"), func() 
 	})
 
 	// -------------------------------------------------------------------------
+	// Managed label removal reconciliation
+	// -------------------------------------------------------------------------
+
+	Context("managed label removal reconciliation", func() {
+		It("should restore the managed label when removed externally from resources", func() {
+			createTrustManager(newTrustManagerCR())
+
+			// The "app" label is the managed resource label used by the predicate
+			// to filter watch events. Removing it tests that the predicate checks
+			// both old and new objects on updates, so the event is not silently dropped.
+
+			By("removing managed label from ServiceAccount")
+			sa, err := clientset.CoreV1().ServiceAccounts(trustManagerNamespace).Get(ctx, trustManagerServiceAccountName, metav1.GetOptions{})
+			Expect(err).ShouldNot(HaveOccurred())
+			delete(sa.Labels, "app")
+			_, err = clientset.CoreV1().ServiceAccounts(trustManagerNamespace).Update(ctx, sa, metav1.UpdateOptions{})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			By("verifying controller restores managed label on ServiceAccount")
+			Eventually(func(g Gomega) {
+				sa, err := clientset.CoreV1().ServiceAccounts(trustManagerNamespace).Get(ctx, trustManagerServiceAccountName, metav1.GetOptions{})
+				g.Expect(err).ShouldNot(HaveOccurred())
+				g.Expect(sa.Labels).Should(HaveKeyWithValue("app", trustManagerCommonName))
+			}, lowTimeout, fastPollInterval).Should(Succeed())
+
+			By("removing managed label from Deployment")
+			dep, err := clientset.AppsV1().Deployments(trustManagerNamespace).Get(ctx, trustManagerDeploymentName, metav1.GetOptions{})
+			Expect(err).ShouldNot(HaveOccurred())
+			delete(dep.Labels, "app")
+			_, err = clientset.AppsV1().Deployments(trustManagerNamespace).Update(ctx, dep, metav1.UpdateOptions{})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			By("verifying controller restores managed label on Deployment")
+			Eventually(func(g Gomega) {
+				dep, err := clientset.AppsV1().Deployments(trustManagerNamespace).Get(ctx, trustManagerDeploymentName, metav1.GetOptions{})
+				g.Expect(err).ShouldNot(HaveOccurred())
+				g.Expect(dep.Labels).Should(HaveKeyWithValue("app", trustManagerCommonName))
+			}, lowTimeout, fastPollInterval).Should(Succeed())
+
+			By("removing managed label from ClusterRole")
+			cr, err := clientset.RbacV1().ClusterRoles().Get(ctx, trustManagerClusterRoleName, metav1.GetOptions{})
+			Expect(err).ShouldNot(HaveOccurred())
+			delete(cr.Labels, "app")
+			_, err = clientset.RbacV1().ClusterRoles().Update(ctx, cr, metav1.UpdateOptions{})
+			Expect(err).ShouldNot(HaveOccurred())
+
+			By("verifying controller restores managed label on ClusterRole")
+			Eventually(func(g Gomega) {
+				cr, err := clientset.RbacV1().ClusterRoles().Get(ctx, trustManagerClusterRoleName, metav1.GetOptions{})
+				g.Expect(err).ShouldNot(HaveOccurred())
+				g.Expect(cr.Labels).Should(HaveKeyWithValue("app", trustManagerCommonName))
+			}, lowTimeout, fastPollInterval).Should(Succeed())
+		})
+	})
+
+	// -------------------------------------------------------------------------
 	// Deployment configuration
 	// -------------------------------------------------------------------------
 

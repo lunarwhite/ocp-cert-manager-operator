@@ -16,6 +16,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -95,13 +96,30 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return []reconcile.Request{}
 	}
 
-	// predicate function to ignore events for objects not managed by controller.
-	controllerManagedResources := predicate.NewPredicateFuncs(func(object client.Object) bool {
+	isManagedResource := func(object client.Object) bool {
 		labels := object.GetLabels()
 		matches := labels != nil && labels[common.ManagedResourceLabelKey] == RequestEnqueueLabelValue
 		r.log.V(4).Info("predicate evaluation", "object", fmt.Sprintf("%T", object), "name", object.GetName(), "namespace", object.GetNamespace(), "labels", labels, "matches", matches)
 		return matches
-	})
+	}
+
+	// Predicate to filter events for resources managed by this controller.
+	// On updates, checks both old and new objects so that events where the
+	// managed label is removed still trigger reconciliation.
+	controllerManagedResources := predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return isManagedResource(e.Object)
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return isManagedResource(e.ObjectOld) || isManagedResource(e.ObjectNew)
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return isManagedResource(e.Object)
+		},
+		GenericFunc: func(e event.GenericEvent) bool {
+			return isManagedResource(e.Object)
+		},
+	}
 
 	controllerManagedResourcePredicates := builder.WithPredicates(controllerManagedResources)
 
