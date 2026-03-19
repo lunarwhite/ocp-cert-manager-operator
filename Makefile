@@ -57,9 +57,9 @@ endif
 # --- Operand Versions ---
 
 # Versions of the cert-manager components managed by this operator
-CERT_MANAGER_VERSION ?= v1.19.2
-ISTIO_CSR_VERSION ?= v0.15.0
-TRUST_MANAGER_VERSION ?= "v0.20.3"
+CERT_MANAGER_VERSION ?= v1.19.4
+ISTIO_CSR_VERSION ?= v0.16.0
+TRUST_MANAGER_VERSION ?= v0.20.3
 
 # --- Test Versions ---
 
@@ -88,6 +88,9 @@ else
 GOBIN := $(shell go env GOBIN)
 endif
 
+# Tool versions
+YQ_VERSION := v4.52.4
+
 # Tool binary paths (all built from vendor for consistency and performance)
 CONTROLLER_GEN := $(BIN_DIR)/controller-gen
 GOLANGCI_LINT := $(BIN_DIR)/golangci-lint
@@ -99,6 +102,7 @@ OPM := $(BIN_DIR)/opm
 SETUP_ENVTEST := $(BIN_DIR)/setup-envtest
 JSONNET := $(BIN_DIR)/jsonnet
 GINKGO := $(BIN_DIR)/ginkgo
+YQ = $(BIN_DIR)/yq
 
 # ============================================================================
 # Image Configuration
@@ -210,6 +214,7 @@ help: ## Display this help.
 # Include the library makefiles
 include $(addprefix ./vendor/github.com/openshift/build-machinery-go/make/, \
 	targets/openshift/bindata.mk \
+	targets/openshift/yq.mk \
 )
 
 # Generate bindata targets
@@ -430,7 +435,7 @@ govulncheck: $(GOVULNCHECK) $(OUTPUT_DIR) ## Run govulncheck vulnerability scan.
 update: generate update-manifests update-bindata ## Update all generated code and manifests.
 
 .PHONY: update-manifests
-update-manifests: $(HELM) $(JSONNET) ## Update cert-manager and istio-csr operand manifests.
+update-manifests: $(HELM) $(JSONNET) $(YQ) ## Update cert-manager and istio-csr operand manifests.
 	hack/update-cert-manager-manifests.sh $(CERT_MANAGER_VERSION)
 	hack/update-istio-csr-manifests.sh $(ISTIO_CSR_VERSION)
 	hack/update-trust-manager-manifests.sh $(TRUST_MANAGER_VERSION)
@@ -510,6 +515,8 @@ $(BIN_DIR):
 
 $(OUTPUT_DIR):
 	@mkdir -p $(OUTPUT_DIR)
+
+$(YQ): ensure-yq  ## Download yq locally if necessary.
 
 # Tools built from vendor
 $(CONTROLLER_GEN): $(BIN_DIR) ## Build controller-gen from vendor.
