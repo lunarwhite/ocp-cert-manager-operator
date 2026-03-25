@@ -496,6 +496,23 @@ func TestDeploymentReconciliation(t *testing.T) {
 			wantPatchCount:  1,
 		},
 		{
+			name:     "apply when defaultCAPackage changed from Enabled to Disabled",
+			setImage: true,
+			preReq: func(r *Reconciler, m *fakes.FakeCtrlClient) {
+				m.ExistsCalls(func(ctx context.Context, key client.ObjectKey, obj client.Object) (bool, error) {
+					tm := testTrustManager().WithDefaultCAPackage(v1alpha1.DefaultCAPackagePolicyEnabled).Build()
+					dep, err := r.getDeploymentObject(tm, testResourceLabels(), testResourceAnnotations(), "abc123hash")
+					if err != nil {
+						t.Fatalf("unexpected error: %v", err)
+					}
+					dep.DeepCopyInto(obj.(*appsv1.Deployment))
+					return true, nil
+				})
+			},
+			wantExistsCount: 1,
+			wantPatchCount:  1,
+		},
+		{
 			name:         "apply when existing has pod template annotation drift",
 			tmBuilder:    testTrustManager().WithDefaultCAPackage(v1alpha1.DefaultCAPackagePolicyEnabled),
 			caBundleHash: "abc123hash",
