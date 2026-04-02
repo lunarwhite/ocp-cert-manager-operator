@@ -5,6 +5,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/cert-manager-operator/api/operator/v1alpha1"
@@ -451,7 +452,9 @@ func (r *Reconciler) handleClusterRoleBindingModification(istiocsr *v1alpha1.Ist
 	if rbacRoleBindingRefModified(desired, fetched) {
 		r.log.V(1).Info("clusterrolebinding roleRef changed, deleting for recreation (roleRef is immutable)", "name", roleBindingName)
 		if err := r.Delete(r.ctx, fetched); err != nil {
-			return recreate, common.FromClientError(err, "failed to delete %s clusterrolebinding to replace roleRef", roleBindingName)
+			if !apierrors.IsNotFound(err) {
+				return recreate, common.FromClientError(err, "failed to delete %s clusterrolebinding to replace roleRef", roleBindingName)
+			}
 		}
 		recreate = true
 		return recreate, nil
